@@ -10,18 +10,36 @@ import io.github.droidkaigi.confsched2018.util.CustomGlideApp
 import io.github.droidkaigi.confsched2018.util.ext.toGone
 import io.github.droidkaigi.confsched2018.util.ext.toVisible
 import io.github.droidkaigi.confsched2018.util.lang
+import android.text.Spanned
+import android.graphics.Color
+import android.graphics.Typeface
+import android.text.SpannableString
+import java.util.regex.Pattern
+import android.text.style.BackgroundColorSpan
+import android.text.style.StyleSpan
+
 
 data class SpeechSessionItem(
         override val session: Session.SpeechSession,
         private val onFavoriteClickListener: (Session.SpeechSession) -> Unit,
         private val fragment: Fragment,
-        private val isShowDayNumber: Boolean = false
+        private val isShowDayNumber: Boolean = false,
+        private val highlightedString: String? = null
 ) : BindableItem<ItemSpeechSessionBinding>(
         session.id.toLong()
 ), SessionItem {
 
     override fun bind(viewBinding: ItemSpeechSessionBinding, position: Int) {
         viewBinding.session = session
+
+        if (highlightedString != null) {
+            viewBinding.title.text = adaptHighlightString(session.title, highlightedString)
+            viewBinding.description.text = adaptHighlightString(session.desc, highlightedString)
+        } else {
+            viewBinding.title.text = session.title
+            viewBinding.description.text = session.desc
+        }
+
         viewBinding.topic.text = session.topic.name
         viewBinding.level.text = session.level.getNameByLang(lang())
         val speakerImages = arrayOf(
@@ -54,6 +72,22 @@ data class SpeechSessionItem(
         }
         viewBinding.isShowDayNumber = isShowDayNumber
     }
+
+    private fun adaptHighlightString(message: String, highlightString: String): SpannableString {
+        val ss = SpannableString(message)
+
+        val pattern = Pattern.compile(highlightString, Pattern.CASE_INSENSITIVE)
+        val matcher = pattern.matcher(message)
+        while (matcher.find()) {
+            val start = matcher.start()
+            val end = matcher.end()
+            ss.setSpan(StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            ss.setSpan(BackgroundColorSpan(Color.YELLOW), start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        }
+
+        return ss
+    }
+
 
     override fun getLayout(): Int = R.layout.item_speech_session
 }

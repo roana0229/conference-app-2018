@@ -57,6 +57,8 @@ class SearchFragment : Fragment(), Injectable {
         searchViewModel.onFavoriteClick(session)
     }
 
+    private var searchedQuery: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -87,9 +89,10 @@ class SearchFragment : Fragment(), Injectable {
             when (result) {
                 is Result.Success -> {
                     val searchResult = result.data
-                    sessionsSection.updateSessions(searchResult.sessions, onFavoriteClickListener)
+                    sessionsSection.updateSessions(searchResult.sessions, onFavoriteClickListener, searchedQuery)
                     speakersSection.updateSpeakers(searchResult.speakers)
                     binding.sessionsRecycler.scrollToPosition(0)
+                    binding.sessionsRecycler.adapter.notifyDataSetChanged()
                 }
                 is Result.Failure -> {
                     Timber.e(result.e)
@@ -132,6 +135,7 @@ class SearchFragment : Fragment(), Injectable {
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 val query = newText.orEmpty()
+                searchedQuery = query
                 searchViewModel.onQuery(query)
                 if (query.isNotBlank()) {
                     binding.searchBeforeGroup.toGone()
